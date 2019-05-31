@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"sync"
+        "os"
 )
 //错误日志
 func ChkError(err error){
@@ -48,12 +49,14 @@ func (w *Worker) Produce(queue chan Cache.Block, mutex *sync.RWMutex){
 		case v, ok :=<- queue:
 			if !ok{
 				mutex.Unlock()
-				queue <- v
+				*b = v
 				w.Close()
 				return
 			}
 		case queue <- *b:
 			mutex.Unlock()
+                default:
+                        os.Exit(3)
 		}
 
 	}
