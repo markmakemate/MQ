@@ -27,10 +27,10 @@ func (s *Subscriber) SetId(id int){
 }
 
 func Sub(worker Worker.AbstractWorker, queue chan Cache.Block, rwMutex *sync.RWMutex){
-	//读写锁，保证Worker consume消息的操作原子性
-	rwMutex.RLock()
 	//队列空 阻塞
 	v := <- queue
+        //读写锁，保证Worker consume消息的操作原子性
+	rwMutex.RLock()
 	worker.Consume(v)
 	rwMutex.RUnlock()
 }
