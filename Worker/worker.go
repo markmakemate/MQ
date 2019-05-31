@@ -63,7 +63,9 @@ func (w *Worker) Produce(queue chan Cache.Block, mutex *sync.RWMutex){
 //单个worker消费
 func (w *Worker) Consume(block Cache.Block){
 	n, err := w.GetConn().Write(block.Get())
-	fmt.Printf("Error happened in index: %d", n)
+	if err != nil{
+		fmt.Printf("Error happened in index: %d", n)
+	}
 	ChkError(err)
 }
 
