@@ -41,7 +41,10 @@ func (w *Worker) Produce(queue chan Cache.Block, mutex *sync.RWMutex){
 	for{
 		mutex.Lock()
 		n, err := w.conn.Read(buf)
-		ChkError(err)
+		if err != nil{
+		     log.Fatal(err)
+                     continue
+	        }
 		b.Set(buf[:n])
 		b.SetOffset(len(queue))
 		//queue关闭时退出
