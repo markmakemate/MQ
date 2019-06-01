@@ -45,7 +45,7 @@ func (p *Publisher) Start(listener net.Listener, queue chan Cache.Block, sign ch
 	//通道关闭则退出Puber，收到关闭信号量则退出Puber。若出现未知错误，通道均阻塞，则退出Puber
 	select {
 	case v, ok :=<- queue:
-		if ok{
+		if !ok{
 			queue <- v
 			return
 		}else{
