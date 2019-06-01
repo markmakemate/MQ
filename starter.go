@@ -5,7 +5,7 @@ import (
 	"MQ/Consumer"
 	"MQ/Producer"
 	"MQ/Utils"
-	"net"
+	"sync"
 )
 
 /*高并发消息队列的基本想法：
@@ -18,16 +18,14 @@ type MQ struct{
 	Puber Producer.Publisher
 	Suber Consumer.Subscriber
 }
-func (q *MQ) Start(topic string, addrOfProd string, addrOfConsume string, size int64){
-	q.Puber.SetTopic(topic)
-	q.Suber.SetTopic(topic)
-	var ProducerListener = new(net.Listener)
-	var ConsumerListener = new(net.Listener)
-	var SuberSignal = make(chan bool)
-	var PuberSignal = make(chan bool)
-	*ProducerListener = Utils.Listen(addrOfProd)
-	*ConsumerListener = Utils.Listen(addrOfConsume)
+func (q *MQ) Start(topic string, addrOfProd string, addrOfConsume string, size int64, PuberSignal chan bool,
+	SuberSignal chan bool){
+	var mutex = new(sync.RWMutex)
+	q.Suber.New(0, topic, mutex)
+	q.Puber.New(0, topic, mutex)
+	ProducerListener := Utils.Listen(addrOfProd)
+	ConsumerListener := Utils.Listen(addrOfConsume)
 	queue := make(chan Cache.Block, size)
-	go q.Puber.Start(*ProducerListener, queue, PuberSignal)
-	go q.Suber.Start(*ConsumerListener, queue, SuberSignal)
+	go q.Puber.Start(ProducerListener, queue, PuberSignal)
+	go q.Suber.Start(ConsumerListener, queue, SuberSignal)
 }

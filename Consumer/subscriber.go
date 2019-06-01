@@ -12,6 +12,13 @@ import (
 type Subscriber struct {
 	topic string
 	id int
+	//全局读写锁，保证Worker Produce消息操作的原子性
+	RwMutex *sync.RWMutex
+}
+func (s *Subscriber) New(id int, topic string, mutex *sync.RWMutex){
+	s.id = id
+	s.topic = topic
+	s.RwMutex = mutex
 }
 func (s *Subscriber) GetTopic() string{
 	return s.topic
@@ -26,13 +33,13 @@ func (s *Subscriber) SetId(id int){
 	s.id = id
 }
 
-func Sub(worker Worker.AbstractWorker, queue chan Cache.Block, rwMutex *sync.RWMutex){
+func (s *Subscriber) Sub(worker Worker.AbstractWorker, queue chan Cache.Block){
 	//队列空 阻塞
 	v := <- queue
     //读写锁，保证Worker consume消息的操作原子性
-	rwMutex.RLock()
+	s.RwMutex.RLock()
 	worker.Consume(v)
-	rwMutex.RUnlock()
+	s.RwMutex.RUnlock()
 }
 func (s *Subscriber) Start(listener net.Listener, queue chan Cache.Block, sign chan bool){
 	var wpool = new(Worker.Workerpool)
