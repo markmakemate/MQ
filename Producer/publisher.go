@@ -44,9 +44,8 @@ func (p *Publisher) Start(listener net.Listener, queue chan Cache.Block, sign ch
 	wpool.Init(1000000)
 	//通道关闭则退出Puber，收到关闭信号量则退出Puber。若出现未知错误，通道均阻塞，则退出Puber
 	select {
-	case v, ok :=<- queue:
+	case _, ok :=<- queue:
 		if !ok{
-			queue <- v
 			return
 		}else{
 			for{
