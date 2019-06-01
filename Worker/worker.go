@@ -2,11 +2,10 @@ package Worker
 
 import (
 	"MQ/Cache"
-	"fmt"
 	"log"
 	"net"
+	"os"
 	"sync"
-        "os"
 )
 //错误日志
 func ChkError(err error){
@@ -42,36 +41,32 @@ func (w *Worker) Produce(queue chan Cache.Block, mutex *sync.RWMutex){
 		mutex.Lock()
 		n, err := w.conn.Read(buf)
 		if err != nil{
-		     log.Fatal(err)
-                     continue
-	        }
-		b.Set(buf[:n])
-		b.SetOffset(len(queue))
-		//queue关闭时退出
-		select {
-		case v, ok :=<- queue:
-			if !ok{
-				mutex.Unlock()
-				*b = v
-				w.Close()
-				return
-			}
-		case queue <- *b:
 			mutex.Unlock()
-                default:
-                        os.Exit(3)
+			log.Fatal(err)
+		}else{
+			b.Set(buf[:n])
+			b.SetOffset(len(queue))
+			//queue关闭时退出
+			select {
+			case _, ok :=<- queue:
+				if !ok{
+					mutex.Unlock()
+					w.Close()
+					return
+				}
+			case queue <- *b:
+				mutex.Unlock()
+			default:
+				os.Exit(3)
+			}
 		}
-
 	}
 
 }
 
 //单个worker消费
 func (w *Worker) Consume(block Cache.Block){
-	n, err := w.GetConn().Write(block.Get())
-	if err != nil{
-		fmt.Printf("Error happened in index: %d", n)
-	}
+	_, err := w.GetConn().Write(block.Get())
 	ChkError(err)
 }
 
