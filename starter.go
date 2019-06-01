@@ -20,12 +20,13 @@ type MQ struct{
 }
 func (q *MQ) Start(topic string, addrOfProd string, addrOfConsume string, size int64, PuberSignal chan bool,
 	SuberSignal chan bool){
+	//全局读写锁，保证Worker消息操作的原子性
 	var mutex = new(sync.RWMutex)
-	q.Suber.New(0, topic, mutex)
-	q.Puber.New(0, topic, mutex)
+	q.Suber.New(0, topic)
+	q.Puber.New(0, topic)
 	ProducerListener := Utils.Listen(addrOfProd)
 	ConsumerListener := Utils.Listen(addrOfConsume)
 	queue := make(chan Cache.Block, size)
-	go q.Puber.Start(ProducerListener, queue, PuberSignal)
-	go q.Suber.Start(ConsumerListener, queue, SuberSignal)
+	go q.Puber.Start(ProducerListener, queue, PuberSignal, mutex)
+	go q.Suber.Start(ConsumerListener, queue, SuberSignal, mutex)
 }

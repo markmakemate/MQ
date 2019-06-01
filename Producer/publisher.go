@@ -14,12 +14,11 @@ type Publisher struct {
 	id int
 	topic string
 	//全局读写锁，保证Worker Produce消息操作的原子性
-	RwMutex *sync.RWMutex
+
 }
-func (p *Publisher) New(id int, topic string, mutex *sync.RWMutex){
+func (p *Publisher) New(id int, topic string){
 	p.id = id
 	p.topic = topic
-	p.RwMutex = mutex
 }
 func (p *Publisher) GetId() int{
 	return p.id
@@ -35,11 +34,11 @@ func (p *Publisher) GetTopic() string{
 }
 
 
-func (p *Publisher) Pub(worker Worker.AbstractWorker, queue chan Cache.Block){
-	worker.Produce(queue,p.RwMutex)
+func (p *Publisher) Pub(worker Worker.AbstractWorker, queue chan Cache.Block, RwMutex *sync.RWMutex){
+	worker.Produce(queue,RwMutex)
 }
 //Publisher启动器
-func (p *Publisher) Start(listener net.Listener, queue chan Cache.Block, sign chan bool){
+func (p *Publisher) Start(listener net.Listener, queue chan Cache.Block, sign chan bool, RwMutex *sync.RWMutex){
 	var wpool = new(Worker.Workerpool)
 	defer listener.Close()
 	wpool.Init(1000000)
@@ -55,7 +54,7 @@ func (p *Publisher) Start(listener net.Listener, queue chan Cache.Block, sign ch
 				go Utils.Handler(conn, wpool)
 				for x:= range wpool.GetChannel(){
 					worker := x
-					go p.Pub(worker, queue)
+					go p.Pub(worker, queue, RwMutex)
 				}
 			}
 		}
