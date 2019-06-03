@@ -46,10 +46,11 @@ func (s *Subscriber) Start(listener net.Listener, queue chan Cache.Block, sign c
 	wpool.Init(1000000)
 	//通道关闭则退出Suber，收到关闭信号量则退出Suber。若出现未知错误，通道均阻塞，则退出Suber
 	select {
-	case _, ok :=<- queue:
+	case v, ok :=<- queue:
 		if !ok{
 			return
 		}else{
+			queue <- v
 			for{
 				conn, err := listener.Accept()
 				Utils.ChkError(err)
