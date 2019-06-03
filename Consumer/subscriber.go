@@ -53,6 +53,9 @@ func (s *Subscriber) Start(listener net.Listener, queue chan Cache.Block, sign c
 			for{
 				conn, err := listener.Accept()
 				Utils.ChkError(err)
+				if err != nil{
+					return
+				}
 				go Utils.Handler(conn, wpool)
 				for x:=range wpool.GetChannel(){
 					worker := x
@@ -62,7 +65,7 @@ func (s *Subscriber) Start(listener net.Listener, queue chan Cache.Block, sign c
 		}
 	case s :=<- sign:
 		if s{
-			os.Exit(0)
+			return
 		}
 	default:
 		os.Exit(3)

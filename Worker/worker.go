@@ -4,7 +4,6 @@ import (
 	"MQ/Cache"
 	"log"
 	"net"
-	"os"
 	"sync"
 )
 //错误日志
@@ -43,6 +42,7 @@ func (w *Worker) Produce(queue chan Cache.Block, mutex *sync.RWMutex){
 		if err != nil{
 			mutex.Unlock()
 			log.Fatal(err)
+			return
 		}else{
 			b.Set(buf[:n])
 			b.SetOffset(len(queue))
@@ -56,8 +56,6 @@ func (w *Worker) Produce(queue chan Cache.Block, mutex *sync.RWMutex){
 				}
 			case queue <- *b:
 				mutex.Unlock()
-			default:
-				os.Exit(3)
 			}
 		}
 	}
@@ -68,6 +66,9 @@ func (w *Worker) Produce(queue chan Cache.Block, mutex *sync.RWMutex){
 func (w *Worker) Consume(block Cache.Block){
 	_, err := w.GetConn().Write(block.Get())
 	ChkError(err)
+	if err != nil{
+		return
+	}
 }
 
 func (w *Worker) Close(){

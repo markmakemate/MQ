@@ -24,6 +24,7 @@ func (wp *Workerpool) Push(w AbstractWorker){
 		wp.max_num = len(wp.WorkerChannel)
 	case v :=<- wp.waitRoom.WaitChannel:
 		wp.WorkerChannel <- v
+		wp.waitRoom.WaitChannel <- w
 	default:
 		wp.waitRoom.WaitChannel <- w
 	}
